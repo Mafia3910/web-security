@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KeyLogger Lab Dashboard</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="header-content">
+        <h1>KeyLogger Lab</h1>
+        <p>Log events</p>
+      </div>
+    </header>
+
+    <main>
+      <div class="toolbar">
+        <p id="status" role="status">Loading events…</p>
+        <div class="actions">
+          <button id="refresh" type="button">Refresh</button>
+          <button id="clear" class="button-danger" type="button">
+            Clear logs
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Page URL</th>
+              <th scope="col">Text</th>
+              <th scope="col">Time</th>
+            </tr>
+          </thead>
+          <tbody id="events"></tbody>
+        </table>
+        <div id="message" hidden></div>
+      </div>
+    </main>
+
+    <script>
+      const eventsBody = document.querySelector("#events");
+      const status = document.querySelector("#status");
+      const message = document.querySelector("#message");
+      const refreshButton = document.querySelector("#refresh");
+      const clearButton = document.querySelector("#clear");
+
+      let loadInProgress = false;
+      let clearing = false;
+
+      function formatTime(value) {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime())
+          ? String(value ?? "")
+          : date.toLocaleString();
+      }
+
+      function renderEvents(events) {
+        const rows = events.map((event) => {
+          const row = document.createElement("tr");
+
+          for (const value of [
+            event.url,
+            event.text,
+            formatTime(event.timestamp),
+          ]) {
+            const cell = document.createElement("td");
+            cell.textContent = value ?? "";
+            row.append(cell);
+          }
+
+          return row;
+        });
+
+        eventsBody.replaceChildren(...rows);
+        status.textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
+
+        message.textContent = events.length === 0 ? "No events yet." : "";
+        message.hidden = events.length !== 0;
+      }
+
+      async function loadEvents() {
+        if (loadInProgress || clearing) {
+          return;
+        }
+
+        loadInProgress = true;
+
+        try {
+          const response = await fetch("/events");
+
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+          }
+
+          const events = await response.json();
+
+          if (!Array.isArray(events)) {
+            throw new Error("Expected /events to return a JSON array");
+          }
+
+          if (!clearing) {
+            renderEvents(events);
+          }
+        } catch (error) {
+          if (!clearing) {
+            status.textContent = "Could not load events";
+            message.textContent = error.message;
+            message.hidden = false;
+          }
+        } finally {
+          loadInProgress = false;
+        }
+      }
+
+      async function clearEvents() {
+        if (!window.confirm("Clear all stored lab events?")) {
+          return;
+        }
+
+        clearing = true;
+        clearButton.disabled = true;
+        status.textContent = "Clearing events…";
+
+        try {
+          const response = await fetch("/events", { method: "DELETE" });
+
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+          }
+
+          renderEvents([]);
+        } catch (error) {
+          status.textContent = "Could not clear events";
+          message.textContent = error.message;
+          message.hidden = false;
+        } finally {
+          clearing = false;
+          clearButton.disabled = false;
+        }
+      }
+
+      refreshButton.addEventListener("click", loadEvents);
+      clearButton.addEventListener("click", clearEvents);
+
+      loadEvents();
+      setInterval(loadEvents, 3000);
+    </script>
+  </body>
+</html>

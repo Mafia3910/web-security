@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Web Security",
+  "version": "1.0.0",
+  "description": "Controlled Web surfing Scanner",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://localhost/*",
+    "http://localhost:3001/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Web Security"
+  }
+}
