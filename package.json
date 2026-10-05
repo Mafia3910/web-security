@@ -1,8 +1,9 @@
 {
-    "name": "web lab",
-    "version": "1.0.0",
-    "private": true,
-    "scripts" :{
-        "start": "node server/server.js"
-    }
+  "name": "keylogger-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Keylogger lab browser extension and local dashboard",
+  "scripts": {
+    "start": "node server/server.js"
+  }
 }
